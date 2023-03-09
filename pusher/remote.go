@@ -47,6 +47,8 @@ func (r *S3Remote) uploadFileToS3(remoteFilePath string, localFilePath string) e
 		return fmt.Errorf("failed to detect content type, %v", err)
 	}
 
+	log.Printf("%s exists, uploading to s3[%s(%s)]...", localFilePath, remoteFilePath, contentType)
+
 	// Open local file for use.
 	f, err := os.Open(localFilePath)
 	if err != nil {
@@ -114,7 +116,6 @@ func (r *S3Remote) batchUploadFilesToS3(pairs []Pair) error {
 				errChan <- err
 				return
 			} else {
-				log.Printf("%s exists, uploading to s3[%s]...", localFilePath, remoteFilePath)
 				if err := r.uploadFileToS3(remoteFilePath, localFilePath); err != nil {
 					log.Printf("failed to upload file to s3, %v", err)
 					errChan <- err
