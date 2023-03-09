@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 type TaskList struct {
@@ -33,6 +34,12 @@ func NewTaskList(c Config) *TaskList {
 		if err != nil {
 			log.Panicf("parsing remote url error: %v", err)
 		}
+		var remotePath string
+		if strings.HasSuffix(u.Path, "/") {
+			remotePath = u.Path[1:]
+		} else {
+			remotePath = u.Path
+		}
 
 		for _, local := range c.Locals {
 			// check local is dir
@@ -50,14 +57,14 @@ func NewTaskList(c Config) *TaskList {
 						if err != nil {
 							log.Panicf("get relative path error: %v", err)
 						}
-						remoteFilePath := filepath.Join(u.Path, relFilePath)
+						remoteFilePath := filepath.Join(remotePath, relFilePath)
 						localFilePath := path
 						fileList.Add(remote, remoteFilePath, localFilePath)
 					}
 					return nil
 				})
 			} else {
-				remoteFilePath := filepath.Join(u.Path, filepath.Base(local))
+				remoteFilePath := filepath.Join(remotePath, filepath.Base(local))
 				localFilePath := local
 				fileList.Add(remote, remoteFilePath, localFilePath)
 			}
