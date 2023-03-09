@@ -35,22 +35,32 @@ func NewTaskList(c Config) *TaskList {
 		}
 
 		for _, local := range c.Locals {
-			// find all files
-			filepath.Walk(local, func(path string, info os.FileInfo, err error) error {
-				if err != nil {
-					log.Panicf("find local files error: %v", err)
-				}
-				if !info.IsDir() {
-					relFilePath, err := filepath.Rel(local, path)
+			// check local is dir
+			info, err := os.Stat(local)
+			if err != nil {
+				log.Panicf("get local file info error: %v", err)
+			}
+			if info.IsDir() {
+				filepath.Walk(local, func(path string, info os.FileInfo, err error) error {
 					if err != nil {
-						log.Panicf("get relative path error: %v", err)
+						log.Panicf("find local files error: %v", err)
 					}
-					remoteFilePath := filepath.Join(u.Path, relFilePath)
-					localFilePath := path
-					fileList.Add(remote, remoteFilePath, localFilePath)
-				}
-				return nil
-			})
+					if !info.IsDir() {
+						relFilePath, err := filepath.Rel(local, path)
+						if err != nil {
+							log.Panicf("get relative path error: %v", err)
+						}
+						remoteFilePath := filepath.Join(u.Path, relFilePath)
+						localFilePath := path
+						fileList.Add(remote, remoteFilePath, localFilePath)
+					}
+					return nil
+				})
+			} else {
+				remoteFilePath := filepath.Join(u.Path, filepath.Base(local))
+				localFilePath := local
+				fileList.Add(remote, remoteFilePath, localFilePath)
+			}
 		}
 	}
 
