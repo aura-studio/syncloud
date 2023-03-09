@@ -1,11 +1,14 @@
 package pusher
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"sync"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -42,13 +45,6 @@ func (r *S3Remote) uploadFileToS3(remoteFilePath string, localFilePath string) e
 		log.Panicf("failed to create s3 client, %v", err)
 	}
 
-	contentType, err := r.detectContentType(localFilePath)
-	if err != nil {
-		return fmt.Errorf("failed to detect content type, %v", err)
-	}
-
-	log.Printf("%s exists, uploading to s3[%s(%s)]...", localFilePath, remoteFilePath, contentType)
-
 	// Open local file for use.
 	f, err := os.Open(localFilePath)
 	if err != nil {
@@ -56,11 +52,20 @@ func (r *S3Remote) uploadFileToS3(remoteFilePath string, localFilePath string) e
 	}
 	defer f.Close()
 
+	// Read all file data.
+	data, err := io.ReadAll(f)
+	if err != nil {
+		return fmt.Errorf("failed to read file %q, %v", localFilePath, err)
+	}
+	contentType := strings.Split(http.DetectContentType(data), ";")[0]
+
+	log.Printf("%s exists, uploading to s3[%s(%s)]...", localFilePath, remoteFilePath, contentType)
+
 	// Upload file body to S3.
 	_, err = client.PutObject(context.Background(), &s3.PutObjectInput{
 		Bucket:      aws.String(r.bucket),
 		Key:         aws.String(remoteFilePath),
-		Body:        f,
+		Body:        bytes.NewReader(data),
 		ContentType: aws.String(contentType),
 	})
 	if err != nil {
@@ -68,28 +73,6 @@ func (r *S3Remote) uploadFileToS3(remoteFilePath string, localFilePath string) e
 	}
 
 	return nil
-}
-
-func (r *S3Remote) detectContentType(localFilePath string) (string, error) {
-	f, err := os.Open(localFilePath)
-	if err != nil {
-		return "", fmt.Errorf("failed to open file %q, %v", localFilePath, err)
-	}
-	defer f.Close()
-
-	// Only the first 512 bytes are used to sniff the content type.
-	buffer := make([]byte, 512)
-
-	_, err = f.Read(buffer)
-	if err != nil {
-		return "", err
-	}
-
-	// Use the net/http package's handy DectectContentType function. Always returns a valid
-	// content-type by returning "application/octet-stream" if no others seemed to match.
-	contentType := http.DetectContentType(buffer)
-
-	return contentType, nil
 }
 
 func (r *S3Remote) batchUploadFilesToS3(pairs []Pair) error {
