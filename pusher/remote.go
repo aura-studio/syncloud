@@ -1,18 +1,17 @@
 package pusher
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"log"
+	"mime"
 	"os"
+	"path/filepath"
 	"sync"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/h2non/filetype"
 )
 
 type Remote interface {
@@ -51,12 +50,7 @@ func (r *S3Remote) uploadFileToS3(remoteFilePath string, localFilePath string) e
 	}
 	defer f.Close()
 
-	// Read all file data.
-	data, err := io.ReadAll(f)
-	if err != nil {
-		return fmt.Errorf("failed to read file %q, %v", localFilePath, err)
-	}
-	contentType := r.detectContentType(data)
+	contentType := mime.TypeByExtension(filepath.Ext(localFilePath))
 
 	log.Printf("%s exists, uploading to s3[%s(%s)]...", localFilePath, remoteFilePath, contentType)
 
@@ -64,7 +58,7 @@ func (r *S3Remote) uploadFileToS3(remoteFilePath string, localFilePath string) e
 	_, err = client.PutObject(context.Background(), &s3.PutObjectInput{
 		Bucket:      aws.String(r.bucket),
 		Key:         aws.String(remoteFilePath),
-		Body:        bytes.NewReader(data),
+		Body:        f,
 		ContentType: aws.String(contentType),
 	})
 	if err != nil {
@@ -72,14 +66,6 @@ func (r *S3Remote) uploadFileToS3(remoteFilePath string, localFilePath string) e
 	}
 
 	return nil
-}
-
-func (r *S3Remote) detectContentType(data []byte) string {
-	kind, err := filetype.Match(data)
-	if err != nil {
-		log.Printf("failed to detect content type, %v", err)
-	}
-	return kind.MIME.Value
 }
 
 func (r *S3Remote) batchUploadFilesToS3(pairs []Pair) error {
