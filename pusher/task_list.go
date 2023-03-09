@@ -35,7 +35,7 @@ func NewTaskList(c Config) *TaskList {
 			log.Panicf("parsing remote url error: %v", err)
 		}
 		var remotePath string
-		if strings.HasSuffix(u.Path, "/") {
+		if strings.HasPrefix(u.Path, "/") {
 			remotePath = u.Path[1:]
 		} else {
 			remotePath = u.Path
