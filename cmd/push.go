@@ -5,7 +5,8 @@ package cmd
 
 import (
 	"log"
-	"syncloud/pusher"
+
+	"github.com/aura-studio/syncloud/pusher"
 
 	"github.com/spf13/cobra"
 )

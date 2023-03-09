@@ -1,4 +1,4 @@
-module syncloud
+module github.com/aura-studio/syncloud
 
 go 1.20
 
