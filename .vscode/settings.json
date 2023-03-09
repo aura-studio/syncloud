@@ -1,0 +1,87 @@
+{
+    "editor.defaultFormatter": null,
+    "editor.tabSize": 4,
+    "editor.formatOnType": true,
+    "editor.formatOnSaveMode": "file",
+    "editor.formatOnPaste": true,
+    "editor.formatOnSave": true,
+    "editor.parameterHints.enabled": true,
+    "editor.tabCompletion": "on",
+    "editor.insertSpaces": false,
+    "editor.fontFamily": "Cascadia Code",
+    "terminal.integrated.fontFamily": "Cascadia Code",
+    "extensions.ignoreRecommendations": false,
+    "search.exclude": {
+        "vendor/*": true,
+    },
+    "git.autofetchPeriod": 60,
+    "git.autofetch": true,
+    "git.fetchOnPull": true,
+    "git.autorefresh": true,
+    "git.ignoreLimitWarning": true,
+    "files.eol": "\n",
+    "files.encoding": "utf8",
+    "files.autoSave": "afterDelay",
+    "files.autoSaveDelay": 5000,
+    "files.exclude": {
+        "**/.git": true,
+    },
+    "files.watcherExclude": {
+        "**/.git": true,
+    },
+    "go.testTimeout": "3600s",
+    "go.testFlags": [
+        "-v",
+        "-count=1"
+    ],
+    "go.testEnvVars": {
+        "GO111MODULE": "on"
+    },
+    "go.docsTool": "gogetdoc",
+    "go.formatTool": "gofumpt",
+    "go.formatFlags": [],
+    "go.lintTool": "golangci-lint",
+    "go.lintOnSave": "package",
+    "go.lintFlags": [
+        "--fast",
+        "--fix"
+    ],
+    "go.vetOnSave": "package",
+    "go.vetFlags": [
+        "-all"
+    ],
+    "go.enableCodeLens": {
+        "runtest": true
+    },
+    "go.buildOnSave": "package",
+    "go.gotoSymbol.ignoreFolders": [],
+    "go.inferGopath": false,
+    "go.gotoSymbol.includeGoroot": true,
+    "go.gotoSymbol.includeImports": true,
+    "go.installDependenciesWhenBuilding": true,
+    "go.useLanguageServer": true,
+    "go.languageServerFlags": [
+        "-rpc.trace",
+        "serve",
+        "--debug=localhost:6060"
+    ],
+    "go.languageServerExperimentalFeatures": {
+        "diagnostics": true
+    },
+    "go.autocompleteUnimportedPackages": true,
+    "go.coverOnTestPackage": true,
+    "go.liveErrors": {
+        "enabled": false,
+        "delay": 500
+    },
+    "go.useCodeSnippetsOnFunctionSuggest": true,
+    "go.useCodeSnippetsOnFunctionSuggestWithoutType": true,
+    "go.toolsManagement.checkForUpdates": "proxy",
+    "go.toolsEnvVars": {
+        "GOOS": "windows",
+        "GOARCH": "amd64",
+        "CGO_ENABLED": "1",
+        "GO111MODULE": "auto"
+    },
+    "svn.ignoreMissingSvnWarning": true,
+}
