@@ -7,6 +7,7 @@ import (
 	"mime"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -50,7 +51,7 @@ func (r *S3Remote) uploadFileToS3(remoteFilePath string, localFilePath string) e
 	}
 	defer f.Close()
 
-	contentType := mime.TypeByExtension(filepath.Ext(localFilePath))
+	contentType := strings.Split(mime.TypeByExtension(filepath.Ext(localFilePath)), ";")[0]
 
 	log.Printf("%s exists, uploading to s3[%s(%s)]...", localFilePath, remoteFilePath, contentType)
 
