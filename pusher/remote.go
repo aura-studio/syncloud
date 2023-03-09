@@ -6,14 +6,13 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"net/http"
 	"os"
-	"strings"
 	"sync"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/h2non/filetype"
 )
 
 type Remote interface {
@@ -57,7 +56,7 @@ func (r *S3Remote) uploadFileToS3(remoteFilePath string, localFilePath string) e
 	if err != nil {
 		return fmt.Errorf("failed to read file %q, %v", localFilePath, err)
 	}
-	contentType := strings.Split(http.DetectContentType(data), ";")[0]
+	contentType := r.detectContentType(data)
 
 	log.Printf("%s exists, uploading to s3[%s(%s)]...", localFilePath, remoteFilePath, contentType)
 
@@ -73,6 +72,14 @@ func (r *S3Remote) uploadFileToS3(remoteFilePath string, localFilePath string) e
 	}
 
 	return nil
+}
+
+func (r *S3Remote) detectContentType(data []byte) string {
+	kind, err := filetype.Match(data)
+	if err != nil {
+		log.Printf("failed to detect content type, %v", err)
+	}
+	return kind.MIME.Value
 }
 
 func (r *S3Remote) batchUploadFilesToS3(pairs []Pair) error {
