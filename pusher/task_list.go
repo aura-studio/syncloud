@@ -57,14 +57,14 @@ func NewTaskList(c Config) *TaskList {
 						if err != nil {
 							log.Panicf("get relative path error: %v", err)
 						}
-						remoteFilePath := filepath.Join(remotePath, relFilePath)
+						remoteFilePath := filepath.ToSlash(filepath.Join(remotePath, relFilePath))
 						localFilePath := path
 						fileList.Add(remote, remoteFilePath, localFilePath)
 					}
 					return nil
 				})
 			} else {
-				remoteFilePath := filepath.Join(remotePath, filepath.Base(local))
+				remoteFilePath := filepath.ToSlash(filepath.Join(remotePath, filepath.Base(local)))
 				localFilePath := local
 				fileList.Add(remote, remoteFilePath, localFilePath)
 			}
