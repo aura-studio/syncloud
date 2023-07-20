@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"log"
 	"mime"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -30,7 +32,11 @@ func NewS3Remote(bucket string) *S3Remote {
 }
 
 func (r *S3Remote) createS3Client() (*s3.Client, error) {
-	cfg, err := config.LoadDefaultConfig(context.Background())
+	cfg, err := config.LoadDefaultConfig(context.Background(),
+		config.WithHTTPClient(&http.Client{
+			Timeout: 86400 * time.Second,
+		}),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create client, %v", err)
 	}
