@@ -33,6 +33,7 @@ func NewS3Remote(bucket string) *S3Remote {
 
 func (r *S3Remote) createS3Client() (*s3.Client, error) {
 	cfg, err := config.LoadDefaultConfig(context.Background(),
+		config.WithRetryMaxAttempts(1000),
 		config.WithHTTPClient(&http.Client{
 			Timeout: 86400 * time.Second,
 		}),
