@@ -36,7 +36,13 @@ to quickly create a Cobra application.`,
 			c.Locals = locals
 		}
 
-		pusher.New(pusher.NewTaskList(c)).Push()
+		if concurrency, err := cmd.Flags().GetInt("concurrency"); err != nil {
+			log.Panic(err)
+		} else if concurrency > 0 {
+			c.Concurrency = concurrency
+		}
+
+		pusher.New(pusher.NewTaskList(c)).Push(c.Concurrency)
 	},
 }
 
@@ -44,4 +50,5 @@ func init() {
 	rootCmd.AddCommand(pushCmd)
 	pushCmd.Flags().StringSliceP("local", "l", nil, "local file path")
 	pushCmd.Flags().StringSliceP("remote", "r", nil, "remote file path")
+	pushCmd.Flags().IntP("concurrency", "c", 1, "concurrency count")
 }

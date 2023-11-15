@@ -15,9 +15,12 @@ func New(taskList *TaskList) *Pusher {
 	}
 }
 
-func (p *Pusher) Push() {
+func (p *Pusher) Push(concurrency int) {
 	for s, tasks := range p.Tasks {
-		p.newRemote(s).Push(tasks)
+		p.newRemote(s).Push(RemoteTask{
+			Pairs:       tasks,
+			Concurrency: concurrency,
+		})
 	}
 }
 

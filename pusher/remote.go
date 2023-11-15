@@ -9,7 +9,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -18,7 +17,12 @@ import (
 )
 
 type Remote interface {
-	Push([]Pair)
+	Push(RemoteTask)
+}
+
+type RemoteTask struct {
+	Pairs       []Pair
+	Concurrency int
 }
 
 type S3Remote struct {
@@ -77,39 +81,51 @@ func (r *S3Remote) uploadFileToS3(remoteFilePath string, localFilePath string) e
 	return nil
 }
 
-func (r *S3Remote) batchUploadFilesToS3(pairs []Pair) error {
-	var wg sync.WaitGroup
-	var errChan = make(chan error, len(pairs))
-	for _, pair := range pairs {
-		wg.Add(1)
-		go func(pair Pair) {
-			defer wg.Done()
-			localFilePath := pair.LocalFilePath
-			remoteFilePath := pair.RemoteFilePath
+func (r *S3Remote) batchUploadFilesToS3(remoteTask RemoteTask) error {
+	var errChan = make(chan error, len(remoteTask.Pairs))
+	var taskCh = make(chan Pair, len(remoteTask.Pairs))
+	var doneCh = make(chan struct{}, len(remoteTask.Pairs))
+	for _, pair := range remoteTask.Pairs {
+		taskCh <- pair
+	}
 
-			if stat, err := os.Stat(localFilePath); err != nil {
-				if os.IsNotExist(err) {
-					log.Printf("%s does not exist", localFilePath)
+	for i := 0; i < remoteTask.Concurrency; i++ {
+		go func() {
+			for pair := range taskCh {
+				localFilePath := pair.LocalFilePath
+				remoteFilePath := pair.RemoteFilePath
+
+				if stat, err := os.Stat(localFilePath); err != nil {
+					if os.IsNotExist(err) {
+						log.Printf("%s does not exist", localFilePath)
+						errChan <- err
+						doneCh <- struct{}{}
+					} else {
+						log.Printf("failed to stat file, %v", err)
+						errChan <- err
+						doneCh <- struct{}{}
+						return
+					}
+				} else if stat.Size() == 0 {
+					log.Printf("%s is empty", localFilePath)
 					errChan <- err
+					doneCh <- struct{}{}
+					return
 				} else {
-					log.Printf("failed to stat file, %v", err)
-					errChan <- err
-					return
-				}
-			} else if stat.Size() == 0 {
-				log.Printf("%s is empty", localFilePath)
-				errChan <- err
-				return
-			} else {
-				if err := r.uploadFileToS3(remoteFilePath, localFilePath); err != nil {
-					log.Printf("failed to upload file to s3, %v", err)
-					errChan <- err
-					return
+					if err := r.uploadFileToS3(remoteFilePath, localFilePath); err != nil {
+						log.Printf("failed to upload file to s3, %v", err)
+						errChan <- err
+						doneCh <- struct{}{}
+						return
+					}
+					doneCh <- struct{}{}
 				}
 			}
-		}(pair)
+		}()
 	}
-	wg.Wait()
+	for len(doneCh) < len(remoteTask.Pairs) {
+		time.Sleep(time.Millisecond)
+	}
 
 	if len(errChan) > 0 {
 		return fmt.Errorf("%d errors occurred during uploading", len(errChan))
@@ -118,8 +134,8 @@ func (r *S3Remote) batchUploadFilesToS3(pairs []Pair) error {
 	return nil
 }
 
-func (r *S3Remote) Push(tasks []Pair) {
-	if err := r.batchUploadFilesToS3(tasks); err != nil {
+func (r *S3Remote) Push(remoteTask RemoteTask) {
+	if err := r.batchUploadFilesToS3(remoteTask); err != nil {
 		log.Panicf("failed to upload files to s3, %v", err)
 	}
 }
