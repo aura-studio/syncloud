@@ -9,8 +9,4 @@ RUN ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && echo Asia/Shangh
 
 RUN	go install github.com/aura-studio/syncloud@${VERSION}
 
-FROM ubuntu:22.04
-RUN ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && echo Asia/Shanghai > /etc/timezone
-COPY --from=builder /root/go/bin/syncloud /syncloud
-
-ENTRYPOINT ["/syncloud"]
+ENTRYPOINT ["/root/go/bin/syncloud"]
