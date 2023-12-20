@@ -1,1 +1,1 @@
-docker build --build-arg="GO_VERSION=1.21.4" --build-arg="VERSION=v1.1.7" -t syncloud:v1.1.7 .
+docker build --build-arg="GO_VERSION=1.21.4" --build-arg="VERSION=v1.1.7" --no-cache -t syncloud:v1.1.7 .
